@@ -76,29 +76,5 @@ vector<Particula> remuestrearParticulas(vector<Particula> &particulas) {
 }
 
 // Estimación de posición
-void printParticulas(vector<Particula> particulas) {
-    for (size_t i = 0; i < particulas.size(); i++)
-        cout << "[" << i << "] : {" << particulas[i].x << ", " << particulas[i].peso << "}\n";
-}
 
 // Main
-int main() {
-    vector<Particula> particulas = {
-        {1.0, 0.05}, {2.5, 0.12}, {3.1, 0.08}, {4.0, 0.15}, {5.2, 0.03},
-        {6.8, 0.20}, {7.1, 0.09}, {8.5, 0.11}, {9.0, 0.07}, {0.3, 0.18},
-        {1.5, 0.06}, {2.2, 0.10}, {3.9, 0.13}, {4.4, 0.04}, {5.0, 0.17},
-        {6.1, 0.02}, {7.7, 0.16}, {8.8, 0.01}, {9.5, 0.14}, {0.9, 0.19}
-    };
-
-    printParticulas(particulas);
-
-    cout << "\n";
-
-    normalizarParticulas(particulas);
-    printParticulas(particulas);
-
-    cout << "\n";
-
-    particulas = remuestrearParticulas(particulas);
-    printParticulas(particulas);
-}
