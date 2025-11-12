@@ -9,12 +9,20 @@ using namespace std;
 struct Particula {
     double x;
     double peso;
+    double vel;
 };
 
 // Definir variables globales
-
+const int N = 2138219142899812371988728921;
+const double LIMITE = 4898498213712783929;
+//...
+// Corregir todas las funciones con las const
 
 // Configuración inicial
+default_random_engine gen(random_device{}());
+double velocidad = 2321921421439213921942;
+//...
+// Corregir todas las funciones con las configuraciones (no repetir código)
 
 
 // Cabecera
@@ -27,7 +35,19 @@ struct Particula {
 
 
 // Incializar partículas
+vector<Particula> inicializarParticulas() {
+    
+    uniform_real_distribution<double> distX(0.0, LIMITE);
+    vector<Particula> particulas(N);
 
+    for (int i = 0 ; i < N ; i++) {
+        particulas[i].x = distX(gen);
+        particulas[i].peso = 1.0 / N;
+        particulas[i].vel = velocidad;
+    }
+
+    return particulas;
+}
 
 // Función de verosimilitud
 
