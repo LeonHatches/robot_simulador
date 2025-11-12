@@ -26,7 +26,18 @@ double velocidad = 2321921421439213921942;
 
 
 // Cabecera
-
+// En este módulo se define la estructura y comportamiento del
+// robot móvil que se desplazará dentro de un pasillo 1D (eje X).
+// Este movimiento se simula con ruido en el desplazamiento y 
+// lecturas de un sensor de profundidad. Los valores obtenidos
+// servirán para el filtro de partículas implementado en etapas
+// posteriores del proyecto.
+// Estructura para representar al robot
+struct Robot {
+    double x;          // posición actual
+    double velocidad;  // velocidad constante
+    double ruidoMov;   // magnitud del ruido en el movimiento
+};
 
 // Moviviento real del robot
 
