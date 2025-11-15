@@ -2,6 +2,7 @@
 #include <vector>
 #include <numeric>
 #include <random>
+#include <cstdlib>
 // Incluir
 
 using namespace std;
@@ -40,9 +41,23 @@ struct Robot {
 };
 
 // Moviviento real del robot
-
+void moverRobot(Robot &r, double limite) {
+    double ruido = ((double)rand() / RAND_MAX) * (2 * r.ruidoMov) - r.ruidoMov;
+    r.x = r.x + r.velocidad + ruido;
+    if (r.x < 0) r.x = 0;
+    if (r.x > limite) r.x = limite;
+}
 
 // Sensor de profundidad
+double medirDistancia(const Robot &r, double pared, double ruidoSensor) {
+    double distanciaReal = pared - r.x;
+    double ruido = ((double)rand() / RAND_MAX) * (2 * ruidoSensor) - ruidoSensor;
+    double medicion = distanciaReal + ruido;
+
+    if (medicion < 0) medicion = 0;
+    
+    return medicion;
+}
 
 
 // Incializar partículas
