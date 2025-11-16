@@ -16,6 +16,12 @@ struct Particula {
 // Definir variables globales
 const int N = 2138219142899812371988728921;
 const double LIMITE = 4898498213712783929;
+//para pruebas
+//const int N = 1000;
+//Mas grande, cuidado con la ram
+//const long long N = 1000000;
+//const long long N = 100000000;
+
 //...
 // Corregir todas las funciones con las const
 
