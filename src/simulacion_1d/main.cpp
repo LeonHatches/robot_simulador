@@ -3,6 +3,10 @@
 #include <numeric>
 #include <random>
 #include <cstdlib>
+#include <fstream>
+#include <cmath>
+#include <string>
+#include <iomanip>
 // Incluir
 
 using namespace std;
@@ -128,5 +132,43 @@ vector<Particula> remuestrearParticulas(vector<Particula> &particulas) {
 }
 
 // Estimación de posición
+// Calcula la posición estimada como promedio ponderado de las partículas
+// y exporta (apend) una línea CSV con: paso, posicion_real, posicion_estimada, error
+// Retorna la posición estimada.
+double estimarPosicionYExportar(const std::vector<Particula> &particulas,
+                                double posicionReal,
+                                const std::string &csvPath,
+                                int paso) {
+    double numerador = 0.0;
+    double denominador = 0.0;
+
+    for (const auto &p : particulas) {
+        numerador += p.x * p.peso;
+        denominador += p.peso;
+    }
+
+    double estimada = 0.0;
+    if (denominador > 0.0)
+        estimada = numerador / denominador;
+
+    double error = std::fabs(estimada - posicionReal);
+
+    std::ofstream out(csvPath, std::ios::app);
+    if (!out) {
+        std::cerr << "No se pudo abrir el archivo CSV: " << csvPath << std::endl;
+        return estimada;
+    }
+
+    // Si es el primer paso (0) añadimos cabecera
+    if (paso == 0) {
+        out << "paso,posicion_real,posicion_estimada,error" << '\n';
+    }
+
+    out << paso << ',' << std::fixed << std::setprecision(6)
+        << posicionReal << ',' << estimada << ',' << error << '\n';
+
+    out.close();
+    return estimada;
+}
 
 // Main
