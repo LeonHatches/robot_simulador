@@ -86,7 +86,21 @@ vector<Particula> inicializarParticulas() {
 }
 
 // Función de verosimilitud
+static double gaussianPdf(double x, double sigma) {
+    if (sigma <= 0.0) return (std::abs(x) < 1e-12) ? 1.0 : 0.0;
 
+    const double PI = acos(-1.0);
+    double denom = sigma * sqrt(2.0 * PI);
+    double expo  = -0.5 * (x * x) / (sigma * sigma);
+    return exp(expo) / denom;
+}
+
+void actualizarPesos(vector<Particula> &particulas,
+                    double medicion,
+                    double pared,
+                    double ruidoSensor) 
+{
+    const double minPeso = 1e-300;
 
 // Normalización (Filtro de partículas)
 void normalizarParticulas(vector<Particula> &particulas) {
