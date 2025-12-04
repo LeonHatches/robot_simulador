@@ -7,7 +7,7 @@
 #include <cmath>
 #include <string>
 #include <iomanip>
-// Incluir
+#include <ctime>
 
 using namespace std;
 
@@ -18,23 +18,12 @@ struct Particula {
 };
 
 // Definir variables globales
-const int N = 2138219142899812371988728921;
-const double LIMITE = 4898498213712783929;
-//para pruebas
-//const int N = 1000;
-//Mas grande, cuidado con la ram
-//const long long N = 1000000;
-//const long long N = 100000000;
-
-//...
-// Corregir todas las funciones con las const
+const int N = 1000;
+const double LIMITE = 100.0;
 
 // Configuración inicial
 default_random_engine gen(random_device{}());
-double velocidad = 2321921421439213921942;
-//...
-// Corregir todas las funciones con las configuraciones (no repetir código)
-
+double velocidad = 1.0;
 
 // Cabecera
 // En este módulo se define la estructura y comportamiento del
@@ -56,6 +45,17 @@ void moverRobot(Robot &r, double limite) {
     r.x = r.x + r.velocidad + ruido;
     if (r.x < 0) r.x = 0;
     if (r.x > limite) r.x = limite;
+}
+
+// Movimiento de las particulas
+void moverParticulas(vector<Particula> &particulas, double ruidoMov, double limite) {
+    for (auto &p : particulas) {
+        double ruido = ((double)rand() / RAND_MAX) * (2 * ruidoMov) - ruidoMov;
+        p.x = p.x + p.vel + ruido;
+
+        if (p.x < 0) p.x = 0;
+        if (p.x > limite) p.x = limite;
+    }
 }
 
 // Sensor de profundidad
@@ -95,13 +95,6 @@ static double gaussianPdf(double x, double sigma) {
     return exp(expo) / denom;
 }
 
-void actualizarPesos(vector<Particula> &particulas,
-                    double medicion,
-                    double pared,
-                    double ruidoSensor) 
-{
-    const double minPeso = 1e-300;
-
 // Normalización (Filtro de partículas)
 void normalizarParticulas(vector<Particula> &particulas) {
     double sum = 0;
@@ -113,13 +106,35 @@ void normalizarParticulas(vector<Particula> &particulas) {
     }
 };
 
+// Actualización de pesos (verosimilitud + normalización)
+void actualizarPesos(vector<Particula> &particulas,
+                    double medicion,
+                    double pared,
+                    double ruidoSensor) 
+{
+    const double minPeso = 1e-300;
+
+    for (auto &p : particulas) {
+        double esperado = pared - p.x;
+        double error = medicion - esperado;
+
+        double prob = gaussianPdf(error, ruidoSensor);
+
+        p.peso *= prob;
+        if (p.peso < minPeso)
+            p.peso = minPeso;
+    }
+
+    normalizarParticulas(particulas);
+}
+
 //  Remuestreo de particulas
 vector<Particula> remuestrearParticulas(vector<Particula> &particulas) {
     int n = particulas.size();
     vector<Particula> nParticulas(n);
 
     vector<double> pesos(n);
-    for (size_t i = 0; i < particulas.size(); i++)
+    for (int i = 0; i < n; i++)
         pesos[i] = particulas[i].peso;
 
     vector<double> sumaAcumulada(n);
@@ -138,8 +153,9 @@ vector<Particula> remuestrearParticulas(vector<Particula> &particulas) {
         while (u > sumaAcumulada[index] && index < n - 1)
             index++;
 
-        nParticulas[i].x = particulas[index].x;
+        nParticulas[i].x   = particulas[index].x;
         nParticulas[i].peso = 1.0 / n;
+        nParticulas[i].vel  = particulas[index].vel;
     }
 
     return nParticulas;
@@ -186,3 +202,83 @@ double estimarPosicionYExportar(const std::vector<Particula> &particulas,
 }
 
 // Main
+int main() {
+    srand(time(NULL));
+
+    // Configuracion inicial
+    const int pasosTotales = 100;  
+    const double pared = LIMITE;   
+    const double ruidoMovimiento = 0.1;
+    const double ruidoSensor = 0.1;
+    const string csvPath = "datos_simulacion.csv";
+
+    // Crear robot real
+    Robot robot;
+    robot.x = 0.0;
+    robot.velocidad = velocidad;
+    robot.ruidoMov = ruidoMovimiento;
+
+    cout << " Simulacion filtro de particulas 1D " << endl;
+    cout << "Partículas: " << N << " | Limite: " << LIMITE << endl;
+    cout << "------------------------------------------" << endl;
+
+    // Inicializar particulas
+    vector<Particula> particulas = inicializarParticulas();
+    cout << "Particulas inicializadas correctamente.\n";      
+
+    // Limpiar archivo CSV previo
+    ofstream limpiar(csvPath, ios::trunc);
+    limpiar.close();
+
+    cout << "\n Inicio de la simulacion \n";
+
+    double errorAcumulado = 0.0;
+    double errorMaximo = 0.0;
+    double errorMinimo = 1e9;
+
+    // bucle principal de simulación
+    for (int paso = 0; paso < pasosTotales; ++paso) {
+
+        // 1. Movimiento real del robot
+        moverRobot(robot, LIMITE);
+
+        // 2. Movimiento de partículas (modelo predictivo)
+        moverParticulas(particulas, ruidoMovimiento, LIMITE);
+
+        // 3. Medición del sensor
+        double medicion = medirDistancia(robot, pared, ruidoSensor);
+
+        // 4. Actualización de pesos según verosimilitud
+        actualizarPesos(particulas, medicion, pared, ruidoSensor);
+
+        // 5. Remuestreo
+        particulas = remuestrearParticulas(particulas);
+
+        // 6. Estimación y registro en CSV
+        double est = estimarPosicionYExportar(particulas, robot.x, csvPath, paso);
+
+        // 7. Mostrar en consola
+        cout << "Paso " << setw(3) << paso
+             << " | Real: " << setw(8) << fixed << setprecision(4) << robot.x
+             << " | Est: "  << setw(8) << est
+             << " | Error: " << setw(8) << fabs(est - robot.x)
+             << endl;
+
+        // estadísticas
+        double errorPaso = fabs(est - robot.x);
+        errorAcumulado += errorPaso;
+        if (errorPaso > errorMaximo) errorMaximo = errorPaso;
+        if (errorPaso < errorMinimo) errorMinimo = errorPaso;             
+    }
+
+    cout << "\n Fin de simulacion " << endl;
+    cout << "Datos exportados a: " << csvPath << endl;
+    double errorPromedio = errorAcumulado / pasosTotales;
+
+    cout << "\nResumen final\n";
+    cout << "Error promedio: " << errorPromedio << endl;
+    cout << "Error máximo:   " << errorMaximo << endl;
+    cout << "Error mínimo:   " << errorMinimo << endl;
+    
+    return 0;
+}
